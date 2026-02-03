@@ -108,9 +108,9 @@ func ListWorktrees() ([]Worktree, error) {
 func parseWorktrees(output string) []Worktree {
 	var worktrees []Worktree
 	var current Worktree
-	
+
 	lines := strings.Split(strings.TrimSpace(output), "\n")
-	
+
 	for _, line := range lines {
 		if line == "" {
 			if current.Path != "" {
@@ -119,15 +119,15 @@ func parseWorktrees(output string) []Worktree {
 			}
 			continue
 		}
-		
+
 		parts := strings.SplitN(line, " ", 2)
 		if len(parts) < 2 {
 			continue
 		}
-		
+
 		key := parts[0]
 		value := parts[1]
-		
+
 		switch key {
 		case "worktree":
 			current.Path = value
@@ -142,34 +142,34 @@ func parseWorktrees(output string) []Worktree {
 			current.Branch = "detached"
 		}
 	}
-	
+
 	// Add the last worktree if exists
 	if current.Path != "" {
 		worktrees = append(worktrees, current)
 	}
-	
+
 	// Mark the first one as main
 	if len(worktrees) > 0 {
 		worktrees[0].IsMain = true
 	}
-	
+
 	return worktrees
 }
 
 // AddWorktree creates a new worktree
 func AddWorktree(path, branch string, createBranch bool) error {
 	args := []string{"worktree", "add"}
-	
+
 	if createBranch {
 		args = append(args, "-b", branch)
 	}
-	
+
 	args = append(args, path)
-	
+
 	if !createBranch && branch != "" {
 		args = append(args, branch)
 	}
-	
+
 	cmd := exec.Command("git", args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -190,21 +190,21 @@ func AddWorktree(path, branch string, createBranch bool) error {
 // RemoveWorktree removes a worktree
 func RemoveWorktree(path string, force bool) error {
 	args := []string{"worktree", "remove"}
-	
+
 	if force {
 		args = append(args, "--force")
 	}
-	
+
 	args = append(args, path)
-	
+
 	cmd := exec.Command("git", args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
-	
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to remove worktree: %s", stderr.String())
 	}
-	
+
 	return nil
 }
 

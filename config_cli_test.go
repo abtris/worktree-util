@@ -9,11 +9,11 @@ import (
 func TestAddCopyFile(t *testing.T) {
 	// Create a temporary home directory
 	tempHome := t.TempDir()
-	
+
 	// Save original HOME
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Set temporary HOME
 	os.Setenv("HOME", tempHome)
 
@@ -51,11 +51,11 @@ func TestAddCopyFile(t *testing.T) {
 func TestRemoveCopyFile(t *testing.T) {
 	// Create a temporary home directory
 	tempHome := t.TempDir()
-	
+
 	// Save original HOME
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Set temporary HOME
 	os.Setenv("HOME", tempHome)
 
@@ -89,11 +89,11 @@ func TestRemoveCopyFile(t *testing.T) {
 func TestSetConfig(t *testing.T) {
 	// Create a temporary home directory
 	tempHome := t.TempDir()
-	
+
 	// Save original HOME
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Set temporary HOME
 	os.Setenv("HOME", tempHome)
 
@@ -120,11 +120,11 @@ func TestSetConfig(t *testing.T) {
 func TestInitConfig(t *testing.T) {
 	// Create a temporary home directory
 	tempHome := t.TempDir()
-	
+
 	// Save original HOME
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Set temporary HOME
 	os.Setenv("HOME", tempHome)
 
@@ -147,4 +147,3 @@ func TestInitConfig(t *testing.T) {
 		t.Errorf("Expected default worktree_dir '.worktrees', got '%s'", config.WorktreeDir)
 	}
 }
-

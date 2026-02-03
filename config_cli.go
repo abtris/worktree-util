@@ -203,4 +203,3 @@ func removeCopyFile(file string) {
 
 	fmt.Printf("✓ Removed '%s' from copy_files list\n", file)
 }
-

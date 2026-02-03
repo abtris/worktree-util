@@ -141,23 +141,23 @@ func TestWorktree_FilterValue(t *testing.T) {
 // Test GenerateWorktreePath
 func TestGenerateWorktreePath(t *testing.T) {
 	tests := []struct {
-		name         string
-		branch       string
+		name          string
+		branch        string
 		shouldContain string
 	}{
 		{
-			name:         "simple branch",
-			branch:       "feature",
+			name:          "simple branch",
+			branch:        "feature",
 			shouldContain: "feature",
 		},
 		{
-			name:         "branch with slash",
-			branch:       "feature/new-feature",
+			name:          "branch with slash",
+			branch:        "feature/new-feature",
 			shouldContain: "feature-new-feature",
 		},
 		{
-			name:         "branch with spaces",
-			branch:       "my feature",
+			name:          "branch with spaces",
+			branch:        "my feature",
 			shouldContain: "my-feature",
 		},
 	}

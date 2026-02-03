@@ -73,4 +73,3 @@ func printHelp() {
 	fmt.Println("                                    Remove a file from copy_files list")
 	fmt.Println("\nFor more information, visit: https://github.com/abtris/worktree-util")
 }
-

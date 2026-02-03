@@ -94,4 +94,3 @@ func SaveConfig(config *Config) error {
 
 	return nil
 }
-

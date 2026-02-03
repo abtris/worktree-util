@@ -20,17 +20,17 @@ const (
 )
 
 type model struct {
-	list          list.Model
-	branchList    list.Model
-	mode          mode
-	pathInput     textinput.Model
-	branchInput   textinput.Model
-	inputFocus    int
-	err           error
-	message       string
-	selectedItem  Worktree
-	width         int
-	height        int
+	list         list.Model
+	branchList   list.Model
+	mode         mode
+	pathInput    textinput.Model
+	branchInput  textinput.Model
+	inputFocus   int
+	err          error
+	message      string
+	selectedItem Worktree
+	width        int
+	height       int
 }
 
 type worktreesLoadedMsg []Worktree
@@ -403,4 +403,3 @@ func (m model) updateConfirmDelete(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	return m, nil
 }
-

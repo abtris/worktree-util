@@ -23,11 +23,11 @@ func TestDefaultConfig(t *testing.T) {
 func TestLoadConfig_NoFile(t *testing.T) {
 	// Create a temporary home directory
 	tempHome := t.TempDir()
-	
+
 	// Save original HOME
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Set temporary HOME
 	os.Setenv("HOME", tempHome)
 
@@ -45,11 +45,11 @@ func TestLoadConfig_NoFile(t *testing.T) {
 func TestLoadConfig_WithCopyFiles(t *testing.T) {
 	// Create a temporary home directory
 	tempHome := t.TempDir()
-	
+
 	// Save original HOME
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Set temporary HOME
 	os.Setenv("HOME", tempHome)
 
@@ -95,11 +95,11 @@ copy_files:
 func TestSaveConfig(t *testing.T) {
 	// Create a temporary home directory
 	tempHome := t.TempDir()
-	
+
 	// Save original HOME
 	originalHome := os.Getenv("HOME")
 	defer os.Setenv("HOME", originalHome)
-	
+
 	// Set temporary HOME
 	os.Setenv("HOME", tempHome)
 
@@ -137,4 +137,3 @@ func TestSaveConfig(t *testing.T) {
 		t.Errorf("Saved CopyFiles length = %v, want %v", len(loadedConfig.CopyFiles), len(config.CopyFiles))
 	}
 }
-
