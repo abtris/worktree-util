@@ -85,6 +85,7 @@ worktree-util --version
 
 #### List View
 - `a` - Add a new worktree
+- `c` - Create worktree from existing branch (shows searchable list of local and remote branches)
 - `d` - Delete selected worktree
 - `r` - Refresh the list
 - `↑/↓` - Navigate through worktrees
@@ -92,6 +93,12 @@ worktree-util --version
 
 #### Add Worktree View
 - `Enter` - Create the worktree
+- `Esc` - Cancel and return to list
+
+#### Branch Selection View
+- `↑/↓` or `j/k` - Navigate through branches
+- `/` - Filter/search branches
+- `Enter` - Create worktree from selected branch
 - `Esc` - Cancel and return to list
 
 #### Delete Confirmation
@@ -193,4 +200,3 @@ my-repo/
 
 MIT
 
-# worktree-util
