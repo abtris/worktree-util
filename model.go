@@ -15,11 +15,13 @@ type mode int
 const (
 	modeList mode = iota
 	modeAdd
+	modeCheckout
 	modeConfirmDelete
 )
 
 type model struct {
 	list          list.Model
+	branchList    list.Model
 	mode          mode
 	pathInput     textinput.Model
 	branchInput   textinput.Model
@@ -32,6 +34,7 @@ type model struct {
 }
 
 type worktreesLoadedMsg []Worktree
+type branchesLoadedMsg []Branch
 type errMsg error
 
 var (
@@ -79,8 +82,17 @@ func initialModel() model {
 	l.SetFilteringEnabled(false)
 	l.Styles.Title = titleStyle
 
+	// Create branch list
+	branchDelegate := list.NewDefaultDelegate()
+	bl := list.New([]list.Item{}, branchDelegate, 0, 0)
+	bl.Title = "Select Branch"
+	bl.SetShowStatusBar(false)
+	bl.SetFilteringEnabled(true)
+	bl.Styles.Title = titleStyle
+
 	return model{
 		list:        l,
+		branchList:  bl,
 		mode:        modeList,
 		pathInput:   pathInput,
 		branchInput: branchInput,
@@ -100,12 +112,21 @@ func loadWorktrees() tea.Msg {
 	return worktreesLoadedMsg(worktrees)
 }
 
+func loadBranches() tea.Msg {
+	branches, err := GetAllBranches()
+	if err != nil {
+		return errMsg(err)
+	}
+	return branchesLoadedMsg(branches)
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		m.list.SetSize(msg.Width, msg.Height-6)
+		m.branchList.SetSize(msg.Width, msg.Height-6)
 		return m, nil
 
 	case worktreesLoadedMsg:
@@ -115,6 +136,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.list.SetItems(items)
 		m.err = nil // Clear any previous errors on successful load
+		return m, nil
+
+	case branchesLoadedMsg:
+		items := make([]list.Item, len(msg))
+		for i, br := range msg {
+			items[i] = br
+		}
+		m.branchList.SetItems(items)
+		m.err = nil
 		return m, nil
 
 	case errMsg:
@@ -132,6 +162,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateList(msg)
 		case modeAdd:
 			return m.updateAdd(msg)
+		case modeCheckout:
+			return m.updateCheckout(msg)
 		case modeConfirmDelete:
 			return m.updateConfirmDelete(msg)
 		}
@@ -165,13 +197,13 @@ func (m model) View() string {
 			b.WriteString("\n\n")
 			b.WriteString(helpStyle.Render("  No worktrees found."))
 			b.WriteString("\n")
-			b.WriteString(helpStyle.Render("  Press 'a' to add your first worktree!"))
+			b.WriteString(helpStyle.Render("  Press 'a' to create a new branch or 'c' to checkout existing!"))
 			b.WriteString("\n\n")
-			b.WriteString(helpStyle.Render("a: add • r: refresh • q: quit"))
+			b.WriteString(helpStyle.Render("a: add new • c: checkout existing • r: refresh • q: quit"))
 		} else {
 			b.WriteString(m.list.View())
 			b.WriteString("\n")
-			b.WriteString(helpStyle.Render("a: add • d: delete • r: refresh • q: quit"))
+			b.WriteString(helpStyle.Render("a: add new • c: checkout existing • d: delete • r: refresh • q: quit"))
 		}
 	case modeAdd:
 		b.WriteString(titleStyle.Render("Add New Worktree"))
@@ -185,6 +217,24 @@ func (m model) View() string {
 		}
 		b.WriteString(fmt.Sprintf("  Path:   %s\n\n", pathPreview))
 		b.WriteString(helpStyle.Render("enter: create • esc: cancel"))
+	case modeCheckout:
+		if m.err != nil {
+			b.WriteString(titleStyle.Render("Select Branch"))
+			b.WriteString("\n\n")
+			b.WriteString(errorStyle.Render(fmt.Sprintf("  ⚠ %v", m.err)))
+			b.WriteString("\n\n")
+			b.WriteString(helpStyle.Render("esc: back"))
+		} else if len(m.branchList.Items()) == 0 {
+			b.WriteString(titleStyle.Render("Select Branch"))
+			b.WriteString("\n\n")
+			b.WriteString(helpStyle.Render("  Loading branches..."))
+			b.WriteString("\n\n")
+			b.WriteString(helpStyle.Render("esc: cancel"))
+		} else {
+			b.WriteString(m.branchList.View())
+			b.WriteString("\n")
+			b.WriteString(helpStyle.Render("enter: checkout • /: filter • esc: cancel"))
+		}
 	case modeConfirmDelete:
 		b.WriteString(titleStyle.Render("Confirm Delete"))
 		b.WriteString("\n\n")
@@ -219,6 +269,11 @@ func (m model) updateList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.err = nil
 		m.message = ""
 		return m, nil
+	case "c":
+		m.mode = modeCheckout
+		m.err = nil
+		m.message = ""
+		return m, loadBranches
 	case "d":
 		if len(m.list.Items()) > 0 {
 			selected := m.list.SelectedItem().(Worktree)
@@ -291,6 +346,38 @@ func (m model) updateAdd(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.pathInput.SetValue("")
 	}
 
+	return m, cmd
+}
+
+func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc":
+		m.mode = modeList
+		m.err = nil
+		return m, nil
+	case "enter":
+		if len(m.branchList.Items()) == 0 {
+			return m, nil
+		}
+
+		selectedBranch := m.branchList.SelectedItem().(Branch)
+
+		// Create worktree from existing branch
+		path, err := CreateWorktreeFromBranch(selectedBranch.Name)
+		if err != nil {
+			m.err = err
+			return m, nil
+		}
+
+		m.mode = modeList
+		m.message = fmt.Sprintf("Worktree created from branch '%s': %s", selectedBranch.Name, path)
+		m.err = nil
+		return m, loadWorktrees
+	}
+
+	// Update branch list
+	var cmd tea.Cmd
+	m.branchList, cmd = m.branchList.Update(msg)
 	return m, cmd
 }
 
