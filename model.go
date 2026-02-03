@@ -31,6 +31,7 @@ type model struct {
 	selectedItem Worktree
 	width        int
 	height       int
+	cdPath       string // Path to cd to when exiting
 }
 
 type worktreesLoadedMsg []Worktree
@@ -203,7 +204,7 @@ func (m model) View() string {
 		} else {
 			b.WriteString(m.list.View())
 			b.WriteString("\n")
-			b.WriteString(helpStyle.Render("a: add new • c: checkout existing • d: delete • r: refresh • q: quit"))
+			b.WriteString(helpStyle.Render("enter: cd to worktree • a: add new • c: checkout existing • d: delete • r: refresh • q: quit"))
 		}
 	case modeAdd:
 		b.WriteString(titleStyle.Render("Add New Worktree"))
@@ -260,6 +261,14 @@ func (m model) updateList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q":
 		return m, tea.Quit
+	case "enter":
+		// Change to selected worktree directory
+		if len(m.list.Items()) > 0 {
+			selected := m.list.SelectedItem().(Worktree)
+			m.cdPath = selected.Path
+			return m, tea.Quit
+		}
+		return m, nil
 	case "a":
 		m.mode = modeAdd
 		m.pathInput.SetValue("")

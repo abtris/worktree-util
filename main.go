@@ -47,9 +47,15 @@ func main() {
 	// Start TUI
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 
-	if _, err := p.Run(); err != nil {
+	finalModel, err := p.Run()
+	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
+	}
+
+	// If user selected a worktree to cd into, print the path
+	if m, ok := finalModel.(model); ok && m.cdPath != "" {
+		fmt.Println(m.cdPath)
 	}
 }
 

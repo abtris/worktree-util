@@ -14,11 +14,12 @@ A simple TUI (Terminal User Interface) for managing Git worktrees, built with Go
 ## Features
 
 - 📋 **List** all git worktrees in your repository
+- 🚀 **Quick navigation** - press Enter to instantly change to a worktree directory
 - ➕ **Add** new worktrees with custom branches (auto-organized in `.worktrees/` folder)
 - 🗑️ **Remove** worktrees safely
 - 🎨 Beautiful terminal interface with keyboard navigation
 - ⚠️ **Smart error handling** with helpful messages
-- 🚀 **Simple workflow** - just enter a branch name, path is auto-generated
+- 🔧 **Simple workflow** - just enter a branch name, path is auto-generated
 
 ## Installation
 
@@ -49,6 +50,51 @@ Run the tool from within a git repository to start the interactive TUI:
 ```bash
 ./worktree-util
 ```
+
+### Quick Directory Change (Recommended Setup)
+
+To enable changing to a worktree directory by pressing Enter, add this function to your shell configuration:
+
+**For Bash (~/.bashrc):**
+```bash
+wt() {
+    local output
+    output=$(worktree-util "$@")
+    local exit_code=$?
+
+    if [ $exit_code -eq 0 ] && [ -n "$output" ] && [ -d "$output" ]; then
+        cd "$output" || return 1
+    elif [ -n "$output" ]; then
+        echo "$output"
+    fi
+
+    return $exit_code
+}
+```
+
+**For Zsh (~/.zshrc):**
+```zsh
+wt() {
+    local output
+    output=$(worktree-util "$@")
+    local exit_code=$?
+
+    if [ $exit_code -eq 0 ] && [ -n "$output" ] && [ -d "$output" ]; then
+        cd "$output" || return 1
+    elif [ -n "$output" ]; then
+        echo "$output"
+    fi
+
+    return $exit_code
+}
+```
+
+After adding the function, reload your shell config:
+```bash
+source ~/.bashrc  # or ~/.zshrc
+```
+
+Now you can use `wt` to launch the tool and press Enter on any worktree to instantly change to that directory!
 
 ### CLI Commands
 
@@ -84,6 +130,7 @@ worktree-util --version
 ### Keyboard Shortcuts
 
 #### List View
+- `Enter` - Change to selected worktree directory (requires shell wrapper - see above)
 - `a` - Add a new worktree
 - `c` - Create worktree from existing branch (shows searchable list of local and remote branches)
 - `d` - Delete selected worktree
