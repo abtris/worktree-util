@@ -62,7 +62,7 @@ brews:
       owner: abtris
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    folder: Formula
+    directory: Formula
     homepage: https://github.com/abtris/worktree-util
     description: "A simple TUI for managing Git worktrees"
     license: MIT
