@@ -18,6 +18,12 @@ type Worktree struct {
 	IsMain bool
 }
 
+// Branch represents a git branch (local or remote)
+type Branch struct {
+	Name     string
+	IsRemote bool
+}
+
 // GetRepoRoot returns the root directory of the git repository
 func GetRepoRoot() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
@@ -206,5 +212,202 @@ func (w Worktree) Description() string {
 // FilterValue returns the value to filter on
 func (w Worktree) FilterValue() string {
 	return w.Path + " " + w.Branch
+}
+
+// Title returns the title for the branch list item
+func (b Branch) Title() string {
+	if b.IsRemote {
+		return fmt.Sprintf("🌐 %s", b.Name)
+	}
+	return fmt.Sprintf("📌 %s", b.Name)
+}
+
+// Description returns the description for the branch list item
+func (b Branch) Description() string {
+	if b.IsRemote {
+		return "Remote branch"
+	}
+	return "Local branch"
+}
+
+// FilterValue returns the value to filter on
+func (b Branch) FilterValue() string {
+	return b.Name
+}
+
+// GetLocalBranches returns a list of all local branches
+func GetLocalBranches() ([]string, error) {
+	cmd := exec.Command("git", "branch", "--format=%(refname:short)")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := strings.TrimSpace(stderr.String())
+		return nil, fmt.Errorf("failed to list local branches: %s", errMsg)
+	}
+
+	output := strings.TrimSpace(out.String())
+	if output == "" {
+		return []string{}, nil
+	}
+
+	branches := strings.Split(output, "\n")
+	return branches, nil
+}
+
+// GetRemoteBranches returns a list of all remote branches
+func GetRemoteBranches() ([]string, error) {
+	cmd := exec.Command("git", "branch", "-r", "--format=%(refname:short)")
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		errMsg := strings.TrimSpace(stderr.String())
+		return nil, fmt.Errorf("failed to list remote branches: %s", errMsg)
+	}
+
+	output := strings.TrimSpace(out.String())
+	if output == "" {
+		return []string{}, nil
+	}
+
+	branches := strings.Split(output, "\n")
+	// Filter out HEAD references
+	var filtered []string
+	for _, branch := range branches {
+		if !strings.Contains(branch, "HEAD") {
+			filtered = append(filtered, branch)
+		}
+	}
+	return filtered, nil
+}
+
+// GetAllBranches returns a combined list of all local and remote branches
+func GetAllBranches() ([]Branch, error) {
+	var allBranches []Branch
+
+	// Get local branches
+	localBranches, err := GetLocalBranches()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, name := range localBranches {
+		allBranches = append(allBranches, Branch{
+			Name:     name,
+			IsRemote: false,
+		})
+	}
+
+	// Get remote branches
+	remoteBranches, err := GetRemoteBranches()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, name := range remoteBranches {
+		allBranches = append(allBranches, Branch{
+			Name:     name,
+			IsRemote: true,
+		})
+	}
+
+	return allBranches, nil
+}
+
+// CreateWorktreeFromBranch creates a new worktree from an existing local or remote branch
+// branchName can be a local branch name (e.g., "feature") or a remote branch (e.g., "origin/feature")
+// Returns the path where the worktree was created
+func CreateWorktreeFromBranch(branchName string) (string, error) {
+	branchName = strings.TrimSpace(branchName)
+	if branchName == "" {
+		return "", fmt.Errorf("branch name cannot be empty")
+	}
+
+	// Get local and remote branches
+	localBranches, err := GetLocalBranches()
+	if err != nil {
+		return "", err
+	}
+
+	remoteBranches, err := GetRemoteBranches()
+	if err != nil {
+		return "", err
+	}
+
+	// Check if branch exists locally
+	isLocal := false
+	for _, branch := range localBranches {
+		if branch == branchName {
+			isLocal = true
+			break
+		}
+	}
+
+	// Check if branch exists remotely
+	isRemote := false
+	remoteBranchName := ""
+	localBranchName := branchName
+
+	// If branchName contains a slash, it might be a remote branch reference
+	if strings.Contains(branchName, "/") {
+		for _, branch := range remoteBranches {
+			if branch == branchName {
+				isRemote = true
+				remoteBranchName = branchName
+				// Extract local branch name (e.g., "origin/feature" -> "feature")
+				parts := strings.SplitN(branchName, "/", 2)
+				if len(parts) == 2 {
+					localBranchName = parts[1]
+				}
+				break
+			}
+		}
+	} else {
+		// Check if there's a remote branch with this name
+		for _, branch := range remoteBranches {
+			// Check for origin/<branchName> or any other remote
+			if strings.HasSuffix(branch, "/"+branchName) {
+				isRemote = true
+				remoteBranchName = branch
+				break
+			}
+		}
+	}
+
+	if !isLocal && !isRemote {
+		return "", fmt.Errorf("branch '%s' not found in local or remote branches", branchName)
+	}
+
+	// Generate path for the worktree
+	// Use the local branch name for path generation
+	path, err := GenerateWorktreePath(localBranchName)
+	if err != nil {
+		return "", err
+	}
+
+	// Create the worktree
+	var cmd *exec.Cmd
+	if isLocal {
+		// Use existing local branch
+		cmd = exec.Command("git", "worktree", "add", path, branchName)
+	} else {
+		// Create local tracking branch from remote
+		// git worktree add <path> -b <local-name> --track <remote-branch>
+		cmd = exec.Command("git", "worktree", "add", path, "-b", localBranchName, "--track", remoteBranchName)
+	}
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("failed to create worktree: %s", stderr.String())
+	}
+
+	return path, nil
 }
 
