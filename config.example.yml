@@ -1,0 +1,11 @@
+# Worktree Util Configuration Example
+# Copy this file to ~/.config/worktree-util/config.yml to customize settings
+
+# Directory where worktrees will be created (relative to repository root)
+# Default: .worktrees
+# Examples:
+#   worktree_dir: .worktrees        # Default - creates .worktrees/ in repo root
+#   worktree_dir: worktrees          # Creates worktrees/ in repo root
+#   worktree_dir: ../my-worktrees    # Creates my-worktrees/ outside repo
+worktree_dir: .worktrees
+

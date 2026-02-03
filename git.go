@@ -8,7 +8,8 @@ import (
 	"strings"
 )
 
-const defaultWorktreeDir = ".worktrees"
+// Global config instance
+var appConfig *Config
 
 // Worktree represents a git worktree
 type Worktree struct {
@@ -56,8 +57,14 @@ func GenerateWorktreePath(branch string) (string, error) {
 	sanitized = strings.ReplaceAll(sanitized, " ", "-")
 	sanitized = strings.ReplaceAll(sanitized, "\\", "-")
 
-	// Create path: <repo-root>/.worktrees/<sanitized-branch-name>
-	worktreePath := filepath.Join(repoRoot, defaultWorktreeDir, sanitized)
+	// Get worktree directory from config, fallback to default
+	worktreeDir := ".worktrees"
+	if appConfig != nil && appConfig.WorktreeDir != "" {
+		worktreeDir = appConfig.WorktreeDir
+	}
+
+	// Create path: <repo-root>/<worktree-dir>/<sanitized-branch-name>
+	worktreePath := filepath.Join(repoRoot, worktreeDir, sanitized)
 
 	return worktreePath, nil
 }

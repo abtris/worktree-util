@@ -22,6 +22,16 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Load configuration
+	config, err := LoadConfig()
+	if err != nil {
+		fmt.Printf("Warning: Failed to load config: %v\n", err)
+		fmt.Println("Using default configuration")
+	}
+
+	// Set global config
+	appConfig = config
+
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {

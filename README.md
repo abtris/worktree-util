@@ -87,6 +87,36 @@ When you create a new worktree, you only need to provide the branch name. The to
 
 This keeps all your worktrees organized in one place!
 
+## Configuration
+
+Worktree Util supports optional configuration via `~/.config/worktree-util/config.yml`.
+
+### Creating a Configuration File
+
+1. Create the config directory:
+   ```bash
+   mkdir -p ~/.config/worktree-util
+   ```
+
+2. Create `~/.config/worktree-util/config.yml`:
+   ```yaml
+   # Directory where worktrees will be created (relative to repo root)
+   worktree_dir: .worktrees
+   ```
+
+### Configuration Options
+
+- **`worktree_dir`**: Directory where worktrees will be created (relative to repository root)
+  - Default: `.worktrees`
+  - Examples:
+    - `.worktrees` - Creates worktrees in `.worktrees/` folder
+    - `worktrees` - Creates worktrees in `worktrees/` folder
+    - `../my-worktrees` - Creates worktrees outside the repository
+
+See [`config.example.yml`](config.example.yml) for a complete example.
+
+**Note:** Configuration is completely optional. If no config file exists, the tool uses sensible defaults.
+
 ## Example Workflow
 
 1. Run `./worktree-util` in your git repository
