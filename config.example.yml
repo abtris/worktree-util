@@ -9,3 +9,14 @@
 #   worktree_dir: ../my-worktrees    # Creates my-worktrees/ outside repo
 worktree_dir: .worktrees
 
+# Files to copy from repository root to new worktrees
+# Useful for .gitignore'd files like .env that are needed in each worktree
+# Default: [] (no files copied)
+# Examples:
+#   copy_files:
+#     - .env
+#     - .env.local
+#     - config/local.yml
+# Note: Files that don't exist will be silently skipped
+copy_files: []
+

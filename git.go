@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -171,11 +173,17 @@ func AddWorktree(path, branch string, createBranch bool) error {
 	cmd := exec.Command("git", args...)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
-	
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to add worktree: %s", stderr.String())
 	}
-	
+
+	// Copy configured files to the new worktree
+	if err := CopyConfiguredFiles(path); err != nil {
+		// Log warning but don't fail - worktree was created successfully
+		fmt.Fprintf(os.Stderr, "Warning: failed to copy files: %v\n", err)
+	}
+
 	return nil
 }
 
@@ -415,6 +423,75 @@ func CreateWorktreeFromBranch(branchName string) (string, error) {
 		return "", fmt.Errorf("failed to create worktree: %s", stderr.String())
 	}
 
+	// Copy configured files to the new worktree
+	if err := CopyConfiguredFiles(path); err != nil {
+		// Log warning but don't fail - worktree was created successfully
+		fmt.Fprintf(os.Stderr, "Warning: failed to copy files: %v\n", err)
+	}
+
 	return path, nil
 }
 
+// CopyConfiguredFiles copies files specified in config from repo root to worktree
+func CopyConfiguredFiles(worktreePath string) error {
+	if appConfig == nil || len(appConfig.CopyFiles) == 0 {
+		// No files to copy
+		return nil
+	}
+
+	repoRoot, err := GetRepoRoot()
+	if err != nil {
+		return err
+	}
+
+	for _, filePattern := range appConfig.CopyFiles {
+		// Support both absolute paths and relative paths
+		sourcePath := filepath.Join(repoRoot, filePattern)
+		destPath := filepath.Join(worktreePath, filePattern)
+
+		// Check if source file exists
+		if _, err := os.Stat(sourcePath); os.IsNotExist(err) {
+			// File doesn't exist, skip it (not an error)
+			continue
+		}
+
+		// Create destination directory if needed
+		destDir := filepath.Dir(destPath)
+		if err := os.MkdirAll(destDir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory %s: %w", destDir, err)
+		}
+
+		// Copy the file
+		if err := copyFile(sourcePath, destPath); err != nil {
+			return fmt.Errorf("failed to copy %s: %w", filePattern, err)
+		}
+	}
+
+	return nil
+}
+
+// copyFile copies a file from src to dst
+func copyFile(src, dst string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	if _, err := io.Copy(destFile, sourceFile); err != nil {
+		return err
+	}
+
+	// Copy file permissions
+	sourceInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	return os.Chmod(dst, sourceInfo.Mode())
+}

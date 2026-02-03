@@ -9,7 +9,8 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	WorktreeDir string `yaml:"worktree_dir"`
+	WorktreeDir string   `yaml:"worktree_dir"`
+	CopyFiles   []string `yaml:"copy_files"`
 }
 
 // DefaultConfig returns the default configuration

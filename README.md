@@ -102,6 +102,11 @@ Worktree Util supports optional configuration via `~/.config/worktree-util/confi
    ```yaml
    # Directory where worktrees will be created (relative to repo root)
    worktree_dir: .worktrees
+
+   # Files to copy from repo root to new worktrees
+   copy_files:
+     - .env
+     - .env.local
    ```
 
 ### Configuration Options
@@ -112,6 +117,19 @@ Worktree Util supports optional configuration via `~/.config/worktree-util/confi
     - `.worktrees` - Creates worktrees in `.worktrees/` folder
     - `worktrees` - Creates worktrees in `worktrees/` folder
     - `../my-worktrees` - Creates worktrees outside the repository
+
+- **`copy_files`**: List of files to copy from repository root to new worktrees
+  - Default: `[]` (no files copied)
+  - Useful for files in `.gitignore` that are needed for development (e.g., `.env` files)
+  - Files that don't exist will be silently skipped
+  - Supports nested paths (e.g., `config/local.yml`)
+  - Examples:
+    ```yaml
+    copy_files:
+      - .env
+      - .env.local
+      - config/local.yml
+    ```
 
 See [`config.example.yml`](config.example.yml) for a complete example.
 
