@@ -205,6 +205,44 @@ See [`config.example.yml`](config.example.yml) for a complete example.
 
 **Note:** Configuration is completely optional. If no config file exists, the tool uses sensible defaults.
 
+## Why `.worktrees/` Subfolder?
+
+By default, this tool organizes all worktrees in a `.worktrees/` subfolder within your repository. This design choice provides several benefits:
+
+### 📁 Organization
+- **All worktrees in one place** - Easy to find and manage all your worktrees
+- **Clean repository root** - Keeps your main repository directory uncluttered
+- **Predictable paths** - Always know where to find worktrees
+
+### 🔍 Easy Discovery
+- **Simple navigation** - Just `cd .worktrees/` to see all worktrees
+- **Tab completion** - Shell autocomplete works naturally
+- **Visual clarity** - `ls` shows all worktrees at a glance
+
+### 🛠️ Tool Integration
+- **IDE/Editor friendly** - Most tools ignore dotfiles by default
+- **Build tools** - Won't accidentally process worktree directories
+- **Search tools** - `grep`, `ripgrep`, etc. skip dotfiles by default
+
+### 🧹 Easy Cleanup
+- **Simple removal** - Delete entire `.worktrees/` folder to clean up
+- **Backup friendly** - Easy to exclude from backups if needed
+- **Git-friendly** - Already in `.gitignore`, won't be committed
+
+### 🎯 Consistent Structure
+```
+my-repo/
+├── .git/                    # Git metadata
+├── .worktrees/              # All worktrees here
+│   ├── feature-auth/        # Feature branch
+│   ├── bugfix-login/        # Bug fix branch
+│   └── experiment-api/      # Experimental work
+├── src/                     # Main repository files
+└── README.md
+```
+
+**Note:** You can customize the worktree directory using the configuration file if you prefer a different location.
+
 ## Example Workflow
 
 1. Run `./worktree-util` in your git repository
