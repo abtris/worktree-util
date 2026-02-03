@@ -37,21 +37,21 @@ type errMsg error
 var (
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("205")).
+			Foreground(lipgloss.Color("111")).
 			MarginLeft(2)
 
 	helpStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241")).
+			Foreground(lipgloss.Color("246")).
 			MarginLeft(2).
 			MarginTop(1)
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("196")).
+			Foreground(lipgloss.Color("203")).
 			Bold(true).
 			MarginLeft(2)
 
 	successStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("42")).
+			Foreground(lipgloss.Color("108")).
 			Bold(true).
 			MarginLeft(2)
 )
