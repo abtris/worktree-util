@@ -15,3 +15,6 @@ worktree-util
 # Go workspace file
 go.work
 
+# Worktrees directory (managed by this tool)
+.worktrees/
+

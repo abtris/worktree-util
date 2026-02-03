@@ -1,0 +1,98 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # Skip arm64 for Windows as it's less common
+    ignore:
+      - goos: windows
+        goarch: arm64
+    binary: worktree-util
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+
+brews:
+  - name: worktree-util
+    repository:
+      owner: abtris
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    folder: Formula
+    homepage: https://github.com/abtris/worktree-util
+    description: "A simple TUI for managing Git worktrees"
+    license: MIT
+    install: |
+      bin.install "worktree-util"
+    test: |
+      system "#{bin}/worktree-util", "--version"
+
+release:
+  github:
+    owner: abtris
+    name: worktree-util
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Git Worktree Manager {{ .Tag }}
+    
+    A simple TUI for managing Git worktrees built with Bubble Tea.
+    
+    ### Installation
+    
+    **Homebrew (macOS/Linux):**
+    ```bash
+    brew install abtris/tap/worktree-util
+    ```
+    
+    **Manual Download:**
+    Download the appropriate binary for your platform below.
+  footer: |
+    ---
+    **Full Changelog**: https://github.com/abtris/worktree-util/compare/{{ .PreviousTag }}...{{ .Tag }}
+
