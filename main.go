@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -53,9 +54,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	// If user selected a worktree to cd into, print the path
+	// If user selected a worktree to cd into, write path to temp file
 	if m, ok := finalModel.(model); ok && m.cdPath != "" {
-		fmt.Println(m.cdPath)
+		tmpFile := filepath.Join(os.TempDir(), "worktree-util-cd")
+		if err := os.WriteFile(tmpFile, []byte(m.cdPath), 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to write cd path: %v\n", err)
+		}
 	}
 }
 

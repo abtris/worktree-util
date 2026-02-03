@@ -53,39 +53,22 @@ Run the tool from within a git repository to start the interactive TUI:
 
 ### Quick Directory Change (Recommended Setup)
 
-To enable changing to a worktree directory by pressing Enter, add this function to your shell configuration:
+To enable changing to a worktree directory by pressing Enter, add this simple wrapper to your shell configuration.
 
-**For Bash (~/.bashrc):**
+**Note:** A shell wrapper is required because programs cannot change their parent shell's directory. All error handling and validation is done by the binary - the wrapper just reads a temp file.
+
+**For Bash (~/.bashrc) or Zsh (~/.zshrc):**
 ```bash
 wt() {
-    local output
-    output=$(worktree-util "$@")
-    local exit_code=$?
-
-    if [ $exit_code -eq 0 ] && [ -n "$output" ] && [ -d "$output" ]; then
-        cd "$output" || return 1
-    elif [ -n "$output" ]; then
-        echo "$output"
+    worktree-util "$@"
+    local tmpfile="/tmp/worktree-util-cd"
+    if [ -f "$tmpfile" ]; then
+        local target=$(cat "$tmpfile")
+        rm -f "$tmpfile"
+        if [ -d "$target" ]; then
+            cd "$target"
+        fi
     fi
-
-    return $exit_code
-}
-```
-
-**For Zsh (~/.zshrc):**
-```zsh
-wt() {
-    local output
-    output=$(worktree-util "$@")
-    local exit_code=$?
-
-    if [ $exit_code -eq 0 ] && [ -n "$output" ] && [ -d "$output" ]; then
-        cd "$output" || return 1
-    elif [ -n "$output" ]; then
-        echo "$output"
-    fi
-
-    return $exit_code
 }
 ```
 

@@ -1,20 +1,19 @@
 #!/bin/bash
 # Shell wrapper for worktree-util to enable directory changing
 # Add this function to your ~/.bashrc or ~/.zshrc
+#
+# All error handling and logic is in the binary.
+# This wrapper just reads the temp file and cd's if it exists.
 
 wt() {
-    local output
-    output=$(worktree-util "$@")
-    local exit_code=$?
-    
-    # If output is a directory path, cd to it
-    if [ $exit_code -eq 0 ] && [ -n "$output" ] && [ -d "$output" ]; then
-        cd "$output" || return 1
-    elif [ -n "$output" ]; then
-        # If there's output but it's not a directory, just print it
-        echo "$output"
+    worktree-util "$@"
+    local tmpfile="/tmp/worktree-util-cd"
+    if [ -f "$tmpfile" ]; then
+        local target=$(cat "$tmpfile")
+        rm -f "$tmpfile"
+        if [ -d "$target" ]; then
+            cd "$target"
+        fi
     fi
-    
-    return $exit_code
 }
 
