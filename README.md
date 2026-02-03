@@ -42,10 +42,43 @@ go build -o worktree-util
 
 ## Usage
 
-Run the tool from within a git repository:
+### TUI Mode
+
+Run the tool from within a git repository to start the interactive TUI:
 
 ```bash
 ./worktree-util
+```
+
+### CLI Commands
+
+Manage configuration from the command line:
+
+```bash
+# Show current configuration
+worktree-util config
+
+# Initialize config file with defaults
+worktree-util config init
+
+# Set configuration values
+worktree-util config set worktree_dir my-worktrees
+
+# Get configuration values
+worktree-util config get worktree_dir
+
+# Add files to copy to new worktrees
+worktree-util config add-copy-file .env
+worktree-util config add-copy-file .env.local
+
+# Remove files from copy list
+worktree-util config remove-copy-file .env
+
+# Show help
+worktree-util --help
+
+# Show version
+worktree-util --version
 ```
 
 ### Keyboard Shortcuts
