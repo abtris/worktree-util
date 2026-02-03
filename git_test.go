@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -325,4 +327,125 @@ func TestParseWorktrees_Empty(t *testing.T) {
 	if len(worktrees) != 0 {
 		t.Errorf("parseWorktrees() returned %d worktrees, want 0", len(worktrees))
 	}
+}
+
+// Test copyFile function
+func TestCopyFile(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := t.TempDir()
+
+	// Create a source file
+	srcPath := filepath.Join(tempDir, "source.txt")
+	content := "test content\n"
+	if err := os.WriteFile(srcPath, []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to create source file: %v", err)
+	}
+
+	// Copy the file
+	dstPath := filepath.Join(tempDir, "dest.txt")
+	if err := copyFile(srcPath, dstPath); err != nil {
+		t.Fatalf("copyFile() failed: %v", err)
+	}
+
+	// Verify the destination file exists
+	if _, err := os.Stat(dstPath); os.IsNotExist(err) {
+		t.Errorf("Destination file was not created")
+	}
+
+	// Verify the content matches
+	dstContent, err := os.ReadFile(dstPath)
+	if err != nil {
+		t.Fatalf("Failed to read destination file: %v", err)
+	}
+	if string(dstContent) != content {
+		t.Errorf("Content mismatch: got %q, want %q", string(dstContent), content)
+	}
+
+	// Verify permissions are preserved
+	srcInfo, _ := os.Stat(srcPath)
+	dstInfo, _ := os.Stat(dstPath)
+	if srcInfo.Mode() != dstInfo.Mode() {
+		t.Errorf("Permissions not preserved: got %v, want %v", dstInfo.Mode(), srcInfo.Mode())
+	}
+}
+
+// Test CopyConfiguredFiles with no config
+func TestCopyConfiguredFiles_NoConfig(t *testing.T) {
+	// Save original config
+	originalConfig := appConfig
+	defer func() { appConfig = originalConfig }()
+
+	// Set config to nil
+	appConfig = nil
+
+	tempDir := t.TempDir()
+	err := CopyConfiguredFiles(tempDir)
+	if err != nil {
+		t.Errorf("CopyConfiguredFiles() with nil config should not error, got: %v", err)
+	}
+}
+
+// Test CopyConfiguredFiles with empty copy_files
+func TestCopyConfiguredFiles_EmptyList(t *testing.T) {
+	// Save original config
+	originalConfig := appConfig
+	defer func() { appConfig = originalConfig }()
+
+	// Set config with empty copy_files
+	appConfig = &Config{
+		WorktreeDir: ".worktrees",
+		CopyFiles:   []string{},
+	}
+
+	tempDir := t.TempDir()
+	err := CopyConfiguredFiles(tempDir)
+	if err != nil {
+		t.Errorf("CopyConfiguredFiles() with empty list should not error, got: %v", err)
+	}
+}
+
+// Test CopyConfiguredFiles with valid files
+func TestCopyConfiguredFiles_ValidFiles(t *testing.T) {
+	// Save original config
+	originalConfig := appConfig
+	defer func() { appConfig = originalConfig }()
+
+	// Create a temporary directory structure
+	tempDir := t.TempDir()
+
+	// Create source files in a mock repo root
+	repoRoot := filepath.Join(tempDir, "repo")
+	if err := os.MkdirAll(repoRoot, 0755); err != nil {
+		t.Fatalf("Failed to create repo root: %v", err)
+	}
+
+	// Create test files
+	testFile1 := ".env"
+	testFile2 := "config/local.yml"
+
+	if err := os.WriteFile(filepath.Join(repoRoot, testFile1), []byte("ENV=test"), 0644); err != nil {
+		t.Fatalf("Failed to create test file 1: %v", err)
+	}
+
+	configDir := filepath.Join(repoRoot, "config")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(repoRoot, testFile2), []byte("key: value"), 0644); err != nil {
+		t.Fatalf("Failed to create test file 2: %v", err)
+	}
+
+	// Note: This test would need to mock GetRepoRoot() to work properly
+	// For now, we'll test the copyFile function which is the core functionality
+	t.Skip("Skipping integration test - would require mocking GetRepoRoot()")
+}
+
+// Test CopyConfiguredFiles with missing files (should skip gracefully)
+func TestCopyConfiguredFiles_MissingFiles(t *testing.T) {
+	// Save original config
+	originalConfig := appConfig
+	defer func() { appConfig = originalConfig }()
+
+	// Note: This test would need to mock GetRepoRoot() to work properly
+	t.Skip("Skipping integration test - would require mocking GetRepoRoot()")
 }
