@@ -85,6 +85,7 @@ func initialModel() model {
 
 	// Create branch list
 	branchDelegate := list.NewDefaultDelegate()
+	branchDelegate.ShowDescription = false // Single-line items
 	bl := list.New([]list.Item{}, branchDelegate, 0, 0)
 	bl.Title = "Select Branch"
 	bl.SetShowStatusBar(false)
@@ -371,7 +372,22 @@ func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 		selectedBranch := m.branchList.SelectedItem().(Branch)
 
-		// Create worktree from existing branch
+		// Check if worktree already exists for this branch
+		existingWorktrees, err := ListWorktrees()
+		if err != nil {
+			m.err = err
+			return m, nil
+		}
+
+		alreadyExists := false
+		for _, wt := range existingWorktrees {
+			if wt.Branch == selectedBranch.Name {
+				alreadyExists = true
+				break
+			}
+		}
+
+		// Create worktree from existing branch (or get existing one)
 		path, err := CreateWorktreeFromBranch(selectedBranch.Name)
 		if err != nil {
 			m.err = err
@@ -379,7 +395,12 @@ func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 
 		m.mode = modeList
-		m.message = fmt.Sprintf("Worktree created from branch '%s': %s", selectedBranch.Name, path)
+		if alreadyExists {
+			m.message = fmt.Sprintf("Worktree already exists for '%s': %s", selectedBranch.Name, path)
+		} else {
+			m.message = fmt.Sprintf("Worktree created from branch '%s': %s", selectedBranch.Name, path)
+		}
+		m.cdPath = path
 		m.err = nil
 		return m, loadWorktrees
 	}

@@ -158,6 +158,11 @@ func parseWorktrees(output string) []Worktree {
 
 // AddWorktree creates a new worktree
 func AddWorktree(path, branch string, createBranch bool) error {
+	// Check if path already exists
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("directory '%s' already exists. Please remove it first with: rm -rf %s", path, path)
+	}
+
 	args := []string{"worktree", "add"}
 
 	if createBranch {
@@ -239,10 +244,7 @@ func (b Branch) Title() string {
 
 // Description returns the description for the branch list item
 func (b Branch) Description() string {
-	if b.IsRemote {
-		return "Remote branch"
-	}
-	return "Local branch"
+	return ""
 }
 
 // FilterValue returns the value to filter on
@@ -396,6 +398,20 @@ func CreateWorktreeFromBranch(branchName string) (string, error) {
 
 	if !isLocal && !isRemote {
 		return "", fmt.Errorf("branch '%s' not found in local or remote branches", branchName)
+	}
+
+	// Check if a worktree already exists for this branch
+	existingWorktrees, err := ListWorktrees()
+	if err != nil {
+		return "", err
+	}
+
+	for _, wt := range existingWorktrees {
+		// Check if this worktree is for the branch we want
+		if wt.Branch == localBranchName || wt.Branch == branchName {
+			// Worktree already exists, return its path
+			return wt.Path, nil
+		}
 	}
 
 	// Generate path for the worktree

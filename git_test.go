@@ -45,12 +45,12 @@ func TestBranch_Description(t *testing.T) {
 		{
 			name:     "local branch",
 			branch:   Branch{Name: "main", IsRemote: false},
-			expected: "Local branch",
+			expected: "",
 		},
 		{
 			name:     "remote branch",
 			branch:   Branch{Name: "origin/feature", IsRemote: true},
-			expected: "Remote branch",
+			expected: "",
 		},
 	}
 
@@ -448,4 +448,29 @@ func TestCopyConfiguredFiles_MissingFiles(t *testing.T) {
 
 	// Note: This test would need to mock GetRepoRoot() to work properly
 	t.Skip("Skipping integration test - would require mocking GetRepoRoot()")
+}
+
+// Test AddWorktree with existing directory
+func TestAddWorktree_ExistingDirectory(t *testing.T) {
+	// Create a temporary directory
+	tempDir := t.TempDir()
+	existingPath := filepath.Join(tempDir, "existing-worktree")
+
+	// Create the directory
+	if err := os.MkdirAll(existingPath, 0755); err != nil {
+		t.Fatalf("Failed to create test directory: %v", err)
+	}
+
+	// Try to create a worktree at the existing path
+	err := AddWorktree(existingPath, "test-branch", true)
+
+	// Should return an error
+	if err == nil {
+		t.Error("AddWorktree() should return error for existing directory")
+	}
+
+	// Error should mention the directory exists
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("Error should mention directory exists, got: %v", err)
+	}
 }
