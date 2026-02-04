@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -60,6 +61,54 @@ var (
 			MarginLeft(2)
 )
 
+// substringFilter implements case-insensitive substring matching for list filtering
+// This replaces the default fuzzy filter with a more predictable substring search
+func substringFilter(term string, targets []string) []list.Rank {
+	// Debug logging
+	debugLog := func(msg string) {
+		f, err := os.OpenFile("/tmp/worktree-util-debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return
+		}
+		defer f.Close()
+		fmt.Fprintf(f, "%s\n", msg)
+	}
+
+	debugLog(fmt.Sprintf("Filter term: '%s'", term))
+	debugLog(fmt.Sprintf("Total targets: %d", len(targets)))
+
+	var ranks []list.Rank
+	term = strings.ToLower(term)
+
+	for i, target := range targets {
+		targetLower := strings.ToLower(target)
+		debugLog(fmt.Sprintf("  Checking target[%d]: '%s'", i, target))
+
+		if strings.Contains(targetLower, term) {
+			debugLog(fmt.Sprintf("    ✓ MATCH: '%s' contains '%s'", target, term))
+			// Find all match positions for highlighting
+			var matchedIndexes []int
+			idx := strings.Index(targetLower, term)
+			if idx >= 0 {
+				for j := 0; j < len(term); j++ {
+					matchedIndexes = append(matchedIndexes, idx+j)
+				}
+			}
+			ranks = append(ranks, list.Rank{
+				Index:          i,
+				MatchedIndexes: matchedIndexes,
+			})
+		} else {
+			debugLog(fmt.Sprintf("    ✗ NO MATCH: '%s' does not contain '%s'", target, term))
+		}
+	}
+
+	debugLog(fmt.Sprintf("Total matches: %d", len(ranks)))
+	debugLog("---")
+
+	return ranks
+}
+
 func initialModel() model {
 	// Create text input for branch name
 	branchInput := textinput.New()
@@ -90,6 +139,7 @@ func initialModel() model {
 	bl.Title = "Select Branch"
 	bl.SetShowStatusBar(false)
 	bl.SetFilteringEnabled(true)
+	bl.Filter = substringFilter // Use substring matching instead of fuzzy matching
 	bl.Styles.Title = titleStyle
 
 	return model{
