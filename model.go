@@ -171,6 +171,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// Update the appropriate list for all other message types
+	// This is crucial for list filtering to work - the list component
+	// sends internal messages that need to be processed
+	switch m.mode {
+	case modeList:
+		var cmd tea.Cmd
+		m.list, cmd = m.list.Update(msg)
+		return m, cmd
+	case modeCheckout:
+		var cmd tea.Cmd
+		m.branchList, cmd = m.branchList.Update(msg)
+		return m, cmd
+	}
+
 	return m, nil
 }
 
