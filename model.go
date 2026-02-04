@@ -360,6 +360,16 @@ func (m model) updateAdd(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// First, always update the branch list so it can process filter messages
+	var cmd tea.Cmd
+	m.branchList, cmd = m.branchList.Update(msg)
+
+	// If filtering is active, don't intercept keys - let the list handle them
+	if m.branchList.FilterState() == list.Filtering {
+		return m, cmd
+	}
+
+	// Handle specific keys only when NOT filtering
 	switch msg.String() {
 	case "esc":
 		m.mode = modeList
@@ -405,9 +415,6 @@ func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, loadWorktrees
 	}
 
-	// Update branch list
-	var cmd tea.Cmd
-	m.branchList, cmd = m.branchList.Update(msg)
 	return m, cmd
 }
 
