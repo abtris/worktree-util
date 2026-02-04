@@ -21,6 +21,15 @@ A simple TUI (Terminal User Interface) for managing Git worktrees, built with Go
 - ⚠️ **Smart error handling** with helpful messages
 - 🔧 **Simple workflow** - just enter a branch name, path is auto-generated
 
+## Demo
+
+See worktree-util in action! This demo shows:
+- Creating a new worktree with a custom branch
+- Creating a worktree from an existing branch
+- Removing a worktree
+
+![Demo](assets/demo.gif)
+
 ## Installation
 
 ### Homebrew (macOS/Linux)
