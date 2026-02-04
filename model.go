@@ -360,12 +360,13 @@ func (m model) updateAdd(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// First, always update the branch list so it can process filter messages
-	var cmd tea.Cmd
-	m.branchList, cmd = m.branchList.Update(msg)
-
-	// If filtering is active, don't intercept keys - let the list handle them
+	// Check if we're filtering BEFORE processing the message
+	// This prevents our custom key handlers from interfering with filter operations
 	if m.branchList.FilterState() == list.Filtering {
+		// If filtering is active, just update the list and return
+		// The list will handle all keys including ESC (to clear filter) and typing
+		var cmd tea.Cmd
+		m.branchList, cmd = m.branchList.Update(msg)
 		return m, cmd
 	}
 
@@ -415,6 +416,9 @@ func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, loadWorktrees
 	}
 
+	// Update branch list for all other keys
+	var cmd tea.Cmd
+	m.branchList, cmd = m.branchList.Update(msg)
 	return m, cmd
 }
 
