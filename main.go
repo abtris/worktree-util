@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 var (
@@ -45,7 +45,7 @@ func main() {
 	appConfig = config
 
 	// Start TUI
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	p := tea.NewProgram(initialModel())
 
 	finalModel, err := p.Run()
 	if err != nil {
