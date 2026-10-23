@@ -146,7 +146,7 @@ worktree-util --version
 
 ## Requirements
 
-- Go 1.21 or higher
+- Go 1.27 or higher
 - Git installed and available in PATH
 - Must be run from within a git repository
 
