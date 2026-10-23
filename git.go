@@ -276,7 +276,9 @@ func GetLocalBranches() ([]string, error) {
 
 // GetRemoteBranches returns a list of all remote branches
 func GetRemoteBranches() ([]string, error) {
-	cmd := exec.Command("git", "branch", "-r", "--format=%(refname:short)")
+	// Full refnames: newer git prints the short form of <remote>/HEAD as just
+	// "<remote>", which a substring check for HEAD would miss.
+	cmd := exec.Command("git", "branch", "-r", "--format=%(refname)")
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -296,9 +298,10 @@ func GetRemoteBranches() ([]string, error) {
 	// Filter out HEAD references
 	var filtered []string
 	for _, branch := range branches {
-		if !strings.Contains(branch, "HEAD") {
-			filtered = append(filtered, branch)
+		if strings.HasSuffix(branch, "/HEAD") {
+			continue
 		}
+		filtered = append(filtered, strings.TrimPrefix(branch, "refs/remotes/"))
 	}
 	return filtered, nil
 }
