@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 )
 
 type mode int
@@ -115,13 +115,13 @@ func initialModel() model {
 	branchInput.Placeholder = "feature/my-feature"
 	branchInput.Focus()
 	branchInput.CharLimit = 256
-	branchInput.Width = 50
+	branchInput.SetWidth(50)
 
 	// Create read-only path display (will be auto-generated)
 	pathInput := textinput.New()
 	pathInput.Placeholder = "(auto-generated)"
 	pathInput.CharLimit = 256
-	pathInput.Width = 50
+	pathInput.SetWidth(50)
 	pathInput.Blur() // Always blurred since it's read-only
 
 	// Create list
@@ -203,7 +203,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 		return m, nil
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Global keys
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
@@ -238,7 +238,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) View() string {
+// View implements tea.Model. The alt screen is a property of the view in v2.
+func (m model) View() tea.View {
+	v := tea.NewView(m.render())
+	v.AltScreen = true
+	return v
+}
+
+func (m model) render() string {
 	var b strings.Builder
 
 	switch m.mode {
@@ -322,7 +329,7 @@ func (m model) View() string {
 	return b.String()
 }
 
-func (m model) updateList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateList(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q":
 		return m, tea.Quit
@@ -372,7 +379,7 @@ func (m model) updateList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateAdd(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateAdd(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		m.mode = modeList
@@ -423,7 +430,7 @@ func (m model) updateAdd(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateCheckout(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// Check if we're filtering BEFORE processing the message
 	// This prevents our custom key handlers from interfering with filter operations
 	if m.branchList.FilterState() == list.Filtering {
@@ -486,7 +493,7 @@ func (m model) updateCheckout(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateConfirmDelete(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m model) updateConfirmDelete(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "y":
 		err := RemoveWorktree(m.selectedItem.Path, false)
